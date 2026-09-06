@@ -105,7 +105,7 @@ pub fn speak_text(app: &AppHandle, player: &Player, settings: &Settings, text: &
         notify(app, "Read Selected Text", "No text was selected.");
         return;
     }
-    match tts::speak(settings, text) {
+    match tts::speak(app, settings, text) {
         Ok(Speech::Audio(bytes)) => player.play_bytes(bytes),
         Ok(Speech::Local(child)) => player.set_local_child(child),
         Err(e) => notify(app, "Could not read text", &e),

@@ -1,6 +1,7 @@
 //! Read Selected Text — library entry point wired up by `main.rs`.
 
 mod commands;
+mod download;
 mod player;
 mod reader;
 mod settings;
@@ -150,6 +151,9 @@ pub fn run() {
             commands::set_api_key,
             commands::has_api_key,
             commands::list_local_voices,
+            commands::list_piper_voices,
+            commands::piper_status,
+            commands::ensure_piper,
             commands::read_now,
             commands::stop_playback,
             commands::test_voice,

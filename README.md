@@ -36,11 +36,16 @@ It runs quietly in the tray and can start automatically at login.
 
 ## Voice engines
 
-| Engine            | API key | Cost                  | Quality        | Offline |
-| ----------------- | :-----: | --------------------- | -------------- | :-----: |
-| **OpenAI TTS**    |   Yes   | ~$15 / 1M chars       | Very natural   |   No    |
-| **ElevenLabs**    |   Yes   | Plan-based            | Most human     |   No    |
-| **System voice**  |   No    | Free                  | Basic/robotic  |   Yes   |
+| Engine              | API key | Cost            | Quality          | Offline |
+| ------------------- | :-----: | --------------- | ---------------- | :-----: |
+| **OpenAI TTS**      |   Yes   | ~$15 / 1M chars | Very natural     |   No    |
+| **ElevenLabs**      |   Yes   | Plan-based      | Most human       |   No    |
+| **Local HD (Piper)**|   No    | **Free**        | Good & natural   |   Yes   |
+| **System voice**    |   No    | Free            | Basic/robotic    |   Yes   |
+
+**Local HD** is a free neural voice ([Piper](https://github.com/rhasspy/piper))
+that runs entirely on your machine. The engine and your chosen voice (~50 MB)
+download once on first use, then work offline with no key and no cost.
 
 Pick whichever you like in Settings and switch anytime. Your API keys are stored
 in the operating system's secure keychain — never in a plaintext file.

@@ -3,8 +3,10 @@
 pub mod elevenlabs;
 pub mod local;
 pub mod openai;
+pub mod piper;
 
 use crate::settings::{Provider, Settings};
+use tauri::AppHandle;
 
 /// The outcome of a synthesis request.
 pub enum Speech {
@@ -15,10 +17,11 @@ pub enum Speech {
 }
 
 /// Synthesise `text` using the engine selected in `settings`.
-pub fn speak(settings: &Settings, text: &str) -> Result<Speech, String> {
+pub fn speak(app: &AppHandle, settings: &Settings, text: &str) -> Result<Speech, String> {
     match settings.provider {
         Provider::Openai => openai::synthesize(settings, text).map(Speech::Audio),
         Provider::Elevenlabs => elevenlabs::synthesize(settings, text).map(Speech::Audio),
+        Provider::Piper => piper::synthesize(app, settings, text).map(Speech::Audio),
         Provider::Local => local::speak(settings, text).map(Speech::Local),
     }
 }

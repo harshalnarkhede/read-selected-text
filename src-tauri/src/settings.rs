@@ -15,6 +15,9 @@ const KEYRING_SERVICE: &str = "com.readselectedtext.app";
 pub enum Provider {
     Openai,
     Elevenlabs,
+    /// Free, offline, neural local voice (downloaded on first use).
+    Piper,
+    /// Built-in operating-system voice.
     Local,
 }
 
@@ -24,7 +27,7 @@ impl Provider {
         match self {
             Provider::Openai => Some("openai_api_key"),
             Provider::Elevenlabs => Some("elevenlabs_api_key"),
-            Provider::Local => None,
+            Provider::Piper | Provider::Local => None,
         }
     }
 }
@@ -53,6 +56,10 @@ pub struct Settings {
     pub elevenlabs_model: String,
     pub elevenlabs_voice_id: String,
 
+    // --- Piper (free local neural voice) ---
+    /// Piper voice key, e.g. `en_US-amy-medium`.
+    pub piper_voice: String,
+
     // --- Local system voice ---
     /// Platform-specific voice identifier/name (empty = system default).
     pub local_voice: String,
@@ -73,6 +80,7 @@ impl Default for Settings {
             openai_voice: "alloy".into(),
             elevenlabs_model: "eleven_multilingual_v2".into(),
             elevenlabs_voice_id: "21m00Tcm4TlvDq8ikWAM".into(), // "Rachel"
+            piper_voice: "en_US-amy-medium".into(),
             local_voice: String::new(),
             local_rate: 0,
         }
@@ -170,7 +178,7 @@ pub fn get_api_key(provider: Provider) -> Option<String> {
 /// Whether a key is stored for the provider (always true for the local voice).
 pub fn has_api_key(provider: Provider) -> bool {
     match provider {
-        Provider::Local => true,
+        Provider::Piper | Provider::Local => true,
         _ => get_api_key(provider)
             .map(|k| !k.trim().is_empty())
             .unwrap_or(false),

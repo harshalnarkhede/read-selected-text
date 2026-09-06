@@ -32,6 +32,7 @@
         <div class="segmented" id="provider">
           <label><input type="radio" name="provider" value="openai" /><span>OpenAI</span></label>
           <label><input type="radio" name="provider" value="elevenlabs" /><span>ElevenLabs</span></label>
+          <label><input type="radio" name="provider" value="piper" /><span>Local HD · free</span></label>
           <label><input type="radio" name="provider" value="local" /><span>System voice</span></label>
         </div>
 
@@ -86,6 +87,22 @@
             <span>Voice ID <a href="#" data-open="https://elevenlabs.io/app/voice-library">browse ↗</a></span>
             <input type="text" id="elevenlabs-voice" placeholder="21m00Tcm4TlvDq8ikWAM" />
           </label>
+        </div>
+
+        <!-- Piper (Local HD) panel -->
+        <div class="provider-panel" data-provider="piper" hidden>
+          <p class="hint">
+            Free, natural neural voice that runs offline. The engine and voice
+            (~50 MB) download once on first use, then work with no internet.
+          </p>
+          <label class="field">
+            <span>Voice</span>
+            <select id="piper-voice"></select>
+          </label>
+          <div class="key-row">
+            <button class="ghost small" id="piper-download">Download / update voice</button>
+          </div>
+          <small id="piper-status" class="key-status"></small>
         </div>
 
         <!-- Local panel -->

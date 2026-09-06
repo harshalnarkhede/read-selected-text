@@ -30,8 +30,12 @@ serde_json = "1"
 arboard = "3"
 # Synthesises the Ctrl/Cmd+C keystroke so we can grab the active selection.
 enigo = "0.2"
-# Plays MP3 returned by the cloud TTS providers.
-rodio = { version = "0.19", features = ["symphonia-mp3"] }
+# Plays MP3 (cloud providers) and WAV (local Piper output).
+rodio = { version = "0.19", features = ["symphonia-mp3", "symphonia-wav"] }
+# Extracting the downloaded Piper engine archives.
+zip = { version = "2", default-features = false, features = ["deflate"] }
+flate2 = "1"
+tar = "0.4"
 # Stores API keys in the OS keychain (Keychain / Credential Manager / Secret Service).
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
 # HTTP client for the TTS providers. rustls avoids a system OpenSSL dependency.

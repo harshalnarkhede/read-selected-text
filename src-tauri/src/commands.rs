@@ -1,9 +1,10 @@
 //! Tauri commands invoked from the settings UI.
 
 use serde::Serialize;
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_autostart::ManagerExt;
 
+use crate::download;
 use crate::reader::{self, AppState};
 use crate::settings::{self, Provider, Settings};
 use crate::tts::{self, SAMPLE_TEXT};
@@ -12,6 +13,7 @@ fn parse_provider(s: &str) -> Result<Provider, String> {
     match s {
         "openai" => Ok(Provider::Openai),
         "elevenlabs" => Ok(Provider::Elevenlabs),
+        "piper" => Ok(Provider::Piper),
         "local" => Ok(Provider::Local),
         other => Err(format!("unknown provider: {other}")),
     }
@@ -75,6 +77,60 @@ pub fn has_api_key(provider: String) -> Result<bool, String> {
 #[tauri::command]
 pub fn list_local_voices() -> Vec<String> {
     tts::local::list_voices()
+}
+
+#[derive(Serialize)]
+pub struct PiperVoiceInfo {
+    pub key: String,
+    pub name: String,
+    pub installed: bool,
+}
+
+#[tauri::command]
+pub fn list_piper_voices() -> Vec<PiperVoiceInfo> {
+    download::PIPER_VOICES
+        .iter()
+        .map(|v| PiperVoiceInfo {
+            key: v.key.to_string(),
+            name: v.name.to_string(),
+            installed: download::voice_installed(v.key),
+        })
+        .collect()
+}
+
+#[derive(Serialize)]
+pub struct PiperStatus {
+    pub engine: bool,
+    pub voice: bool,
+}
+
+#[tauri::command]
+pub fn piper_status(voice: String) -> PiperStatus {
+    PiperStatus {
+        engine: download::installed_exe().is_some(),
+        voice: download::voice_installed(&voice),
+    }
+}
+
+/// Download the Piper engine and the given voice (if missing). Runs on a worker
+/// thread and reports progress via `hd-progress`; finishes with `hd-done`.
+#[tauri::command]
+pub fn ensure_piper(app: AppHandle, voice: String) {
+    std::thread::spawn(move || {
+        let result = (|| -> Result<(), String> {
+            download::ensure_engine(&app)?;
+            download::ensure_voice(&app, &voice)?;
+            Ok(())
+        })();
+        match result {
+            Ok(()) => {
+                let _ = app.emit("hd-done", serde_json::json!({ "ok": true }));
+            }
+            Err(e) => {
+                let _ = app.emit("hd-done", serde_json::json!({ "ok": false, "error": e }));
+            }
+        }
+    });
 }
 
 #[tauri::command]

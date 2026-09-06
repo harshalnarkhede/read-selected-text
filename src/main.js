@@ -1,5 +1,6 @@
 const { invoke } = window.__TAURI__.core;
 const opener = window.__TAURI__.opener;
+const { listen } = window.__TAURI__.event;
 
 const $ = (id) => document.getElementById(id);
 
@@ -17,6 +18,8 @@ async function boot() {
     applySettings(s);
     await refreshKeyStatus();
     await loadLocalVoices(s.local_voice);
+    await loadPiperVoices(s.piper_voice);
+    await refreshPiperStatus();
     updateStatus();
   } catch (e) {
     setStatus("Failed to load settings: " + e, true);
@@ -57,6 +60,7 @@ function gatherSettings() {
     openai_voice: $("openai-voice").value,
     elevenlabs_model: $("elevenlabs-model").value,
     elevenlabs_voice_id: $("elevenlabs-voice").value.trim(),
+    piper_voice: $("piper-voice").value,
     local_voice: $("local-voice").value,
     local_rate: parseInt($("local-rate").value, 10),
   };
@@ -69,14 +73,15 @@ function showPanel(provider) {
   document.querySelectorAll(".provider-panel").forEach((p) => {
     p.hidden = p.dataset.provider !== provider;
   });
-  // Speed only meaningful for cloud providers.
-  $("speed-card").hidden = false;
+  // The System voice has its own rate control; everything else uses speed.
+  $("speed-card").hidden = provider === "local";
 }
 
 document.querySelectorAll('input[name="provider"]').forEach((r) => {
   r.addEventListener("change", (e) => {
     currentProvider = e.target.value;
     showPanel(currentProvider);
+    if (currentProvider === "piper") refreshPiperStatus();
     updateStatus();
   });
 });
@@ -135,6 +140,75 @@ async function loadLocalVoices(selected) {
 }
 
 // ---------------------------------------------------------------------------
+// Piper (Local HD)
+// ---------------------------------------------------------------------------
+async function loadPiperVoices(selected) {
+  try {
+    const voices = await invoke("list_piper_voices");
+    const sel = $("piper-voice");
+    sel.innerHTML = "";
+    for (const v of voices) {
+      const opt = document.createElement("option");
+      opt.value = v.key;
+      opt.textContent = v.name + (v.installed ? "  ✓" : "");
+      sel.appendChild(opt);
+    }
+    if (selected) sel.value = selected;
+  } catch (_) {
+    /* best effort */
+  }
+}
+
+function setPiperStatus(text, kind) {
+  const el = $("piper-status");
+  el.textContent = text;
+  el.className = "key-status " + (kind === "ok" ? "ok" : kind === "err" ? "err" : "");
+}
+
+async function refreshPiperStatus() {
+  try {
+    const st = await invoke("piper_status", { voice: $("piper-voice").value });
+    if (st.engine && st.voice) setPiperStatus("✓ Downloaded — ready offline", "ok");
+    else if (st.engine) setPiperStatus("Engine ready; this voice not downloaded yet.", "");
+    else setPiperStatus("Not downloaded yet — click Download.", "");
+  } catch (_) {
+    /* ignore */
+  }
+}
+
+let piperBusy = false;
+$("piper-download").addEventListener("click", async () => {
+  if (piperBusy) return;
+  piperBusy = true;
+  $("piper-download").disabled = true;
+  setPiperStatus("Starting download…", "");
+  try {
+    await invoke("ensure_piper", { voice: $("piper-voice").value });
+  } catch (e) {
+    setPiperStatus("Could not start: " + e, "err");
+    piperBusy = false;
+    $("piper-download").disabled = false;
+  }
+});
+
+$("piper-voice").addEventListener("change", refreshPiperStatus);
+
+listen("hd-progress", (e) => {
+  if (e.payload && e.payload.message) setPiperStatus(e.payload.message, "");
+});
+listen("hd-done", async (e) => {
+  piperBusy = false;
+  $("piper-download").disabled = false;
+  if (e.payload && e.payload.ok) {
+    setPiperStatus("✓ Voice ready — works offline from now on", "ok");
+    await loadPiperVoices($("piper-voice").value);
+  } else {
+    setPiperStatus("Download failed: " + (e.payload && e.payload.error), "err");
+  }
+  updateStatus();
+});
+
+// ---------------------------------------------------------------------------
 // Status line
 // ---------------------------------------------------------------------------
 function setStatus(text, isError) {
@@ -144,15 +218,26 @@ function setStatus(text, isError) {
 }
 
 async function updateStatus() {
-  const names = { openai: "OpenAI", elevenlabs: "ElevenLabs", local: "System voice" };
+  const names = {
+    openai: "OpenAI",
+    elevenlabs: "ElevenLabs",
+    piper: "Local HD",
+    local: "System voice",
+  };
   let ready = true;
-  if (currentProvider !== "local") {
+  let hint = "";
+  if (currentProvider === "openai" || currentProvider === "elevenlabs") {
     ready = await invoke("has_api_key", { provider: currentProvider });
+    hint = "add an API key to start";
+  } else if (currentProvider === "piper") {
+    const st = await invoke("piper_status", { voice: $("piper-voice").value });
+    ready = st.engine && st.voice;
+    hint = "download the voice to start";
   }
   setStatus(
     ready
       ? `Ready · ${names[currentProvider]}`
-      : `${names[currentProvider]} selected — add an API key to start`
+      : `${names[currentProvider]} selected — ${hint}`
   );
 }
 
