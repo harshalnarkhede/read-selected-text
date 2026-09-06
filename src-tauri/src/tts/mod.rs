@@ -23,6 +23,8 @@ pub fn speak(app: &AppHandle, settings: &Settings, text: &str) -> Result<Speech,
         Provider::Elevenlabs => elevenlabs::synthesize(settings, text).map(Speech::Audio),
         Provider::Piper => piper::synthesize(app, settings, text).map(Speech::Audio),
         Provider::Local => local::speak(settings, text).map(Speech::Local),
+        // Kokoro is handled entirely in the webview (see reader::speak_text).
+        Provider::Kokoro => Err("Kokoro runs in the app window.".into()),
     }
 }
 

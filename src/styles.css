@@ -113,6 +113,8 @@ button.small { padding: 7px 12px; font-size: 13px; }
   margin-bottom: 14px;
 }
 .segmented label { position: relative; }
+/* If there's an odd number of engines, let the last one span the full row. */
+.segmented label:last-child:nth-child(odd) { grid-column: 1 / -1; }
 .segmented input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
 .segmented span {
   display: block;

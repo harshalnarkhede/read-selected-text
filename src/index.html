@@ -33,6 +33,7 @@
           <label><input type="radio" name="provider" value="openai" /><span>OpenAI</span></label>
           <label><input type="radio" name="provider" value="elevenlabs" /><span>ElevenLabs</span></label>
           <label><input type="radio" name="provider" value="piper" /><span>Local HD · free</span></label>
+          <label><input type="radio" name="provider" value="kokoro" /><span>Kokoro · free · beta</span></label>
           <label><input type="radio" name="provider" value="local" /><span>System voice</span></label>
         </div>
 
@@ -103,6 +104,51 @@
             <button class="ghost small" id="piper-download">Download / update voice</button>
           </div>
           <small id="piper-status" class="key-status"></small>
+        </div>
+
+        <!-- Kokoro (beta) panel -->
+        <div class="provider-panel" data-provider="kokoro" hidden>
+          <p class="hint">
+            Highest-quality free voice. Runs the Kokoro neural model right inside
+            the app. The model (~80 MB) downloads once and is cached. <b>Beta</b> —
+            needs internet the first time; quality is excellent but synthesis can
+            take a few seconds on CPU.
+          </p>
+          <label class="field">
+            <span>Voice</span>
+            <select id="kokoro-voice">
+              <optgroup label="American English — female">
+                <option value="af_heart">Heart</option>
+                <option value="af_bella">Bella</option>
+                <option value="af_nicole">Nicole</option>
+                <option value="af_aoede">Aoede</option>
+                <option value="af_sarah">Sarah</option>
+              </optgroup>
+              <optgroup label="American English — male">
+                <option value="am_michael">Michael</option>
+                <option value="am_fenrir">Fenrir</option>
+                <option value="am_puck">Puck</option>
+              </optgroup>
+              <optgroup label="British English">
+                <option value="bf_emma">Emma (f)</option>
+                <option value="bf_isabella">Isabella (f)</option>
+                <option value="bm_george">George (m)</option>
+                <option value="bm_lewis">Lewis (m)</option>
+              </optgroup>
+            </select>
+          </label>
+          <label class="field">
+            <span>Quality / size</span>
+            <select id="kokoro-dtype">
+              <option value="q8">Balanced (q8, ~80 MB)</option>
+              <option value="q4">Smallest (q4, ~45 MB)</option>
+              <option value="fp32">Best (fp32, ~330 MB)</option>
+            </select>
+          </label>
+          <div class="key-row">
+            <button class="ghost small" id="kokoro-load">Load &amp; test model</button>
+          </div>
+          <small id="kokoro-status" class="key-status"></small>
         </div>
 
         <!-- Local panel -->

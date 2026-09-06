@@ -17,6 +17,8 @@ pub enum Provider {
     Elevenlabs,
     /// Free, offline, neural local voice (downloaded on first use).
     Piper,
+    /// Free neural voice that runs in the webview via kokoro-js (beta).
+    Kokoro,
     /// Built-in operating-system voice.
     Local,
 }
@@ -27,7 +29,7 @@ impl Provider {
         match self {
             Provider::Openai => Some("openai_api_key"),
             Provider::Elevenlabs => Some("elevenlabs_api_key"),
-            Provider::Piper | Provider::Local => None,
+            Provider::Piper | Provider::Kokoro | Provider::Local => None,
         }
     }
 }
@@ -60,6 +62,12 @@ pub struct Settings {
     /// Piper voice key, e.g. `en_US-amy-medium`.
     pub piper_voice: String,
 
+    // --- Kokoro (free neural voice in the webview, beta) ---
+    /// Kokoro voice id, e.g. `af_heart`.
+    pub kokoro_voice: String,
+    /// Model precision: fp32 | fp16 | q8 | q4 | q4f16.
+    pub kokoro_dtype: String,
+
     // --- Local system voice ---
     /// Platform-specific voice identifier/name (empty = system default).
     pub local_voice: String,
@@ -81,6 +89,8 @@ impl Default for Settings {
             elevenlabs_model: "eleven_multilingual_v2".into(),
             elevenlabs_voice_id: "21m00Tcm4TlvDq8ikWAM".into(), // "Rachel"
             piper_voice: "en_US-amy-medium".into(),
+            kokoro_voice: "af_heart".into(),
+            kokoro_dtype: "q8".into(),
             local_voice: String::new(),
             local_rate: 0,
         }
@@ -178,7 +188,7 @@ pub fn get_api_key(provider: Provider) -> Option<String> {
 /// Whether a key is stored for the provider (always true for the local voice).
 pub fn has_api_key(provider: Provider) -> bool {
     match provider {
-        Provider::Piper | Provider::Local => true,
+        Provider::Piper | Provider::Kokoro | Provider::Local => true,
         _ => get_api_key(provider)
             .map(|k| !k.trim().is_empty())
             .unwrap_or(false),

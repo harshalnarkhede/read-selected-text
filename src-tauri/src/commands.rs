@@ -14,6 +14,7 @@ fn parse_provider(s: &str) -> Result<Provider, String> {
         "openai" => Ok(Provider::Openai),
         "elevenlabs" => Ok(Provider::Elevenlabs),
         "piper" => Ok(Provider::Piper),
+        "kokoro" => Ok(Provider::Kokoro),
         "local" => Ok(Provider::Local),
         other => Err(format!("unknown provider: {other}")),
     }

@@ -5,11 +5,11 @@ use std::time::{Duration, Instant};
 
 use arboard::Clipboard;
 use enigo::{Direction, Enigo, Key, Keyboard, Settings as EnigoSettings};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_notification::NotificationExt;
 
 use crate::player::Player;
-use crate::settings::Settings;
+use crate::settings::{Provider, Settings};
 use crate::tts::{self, Speech};
 
 /// Shared application state, managed by Tauri and reachable from hotkey handlers.
@@ -105,6 +105,25 @@ pub fn speak_text(app: &AppHandle, player: &Player, settings: &Settings, text: &
         notify(app, "Read Selected Text", "No text was selected.");
         return;
     }
+
+    // Stop whatever is currently playing (any engine) before starting anew.
+    player.stop();
+    let _ = app.emit("kokoro-stop", ());
+
+    // Kokoro runs entirely in the webview; hand off the text to the UI.
+    if settings.provider == Provider::Kokoro {
+        let _ = app.emit(
+            "kokoro-speak",
+            serde_json::json!({
+                "text": text,
+                "voice": settings.kokoro_voice,
+                "speed": settings.speed,
+                "dtype": settings.kokoro_dtype,
+            }),
+        );
+        return;
+    }
+
     match tts::speak(app, settings, text) {
         Ok(Speech::Audio(bytes)) => player.play_bytes(bytes),
         Ok(Speech::Local(child)) => player.set_local_child(child),
@@ -132,8 +151,9 @@ pub fn trigger_read(app: &AppHandle) {
     });
 }
 
-/// Stop any current playback.
+/// Stop any current playback (all engines).
 pub fn trigger_stop(app: &AppHandle) {
     let state: tauri::State<AppState> = app.state();
     state.player.stop();
+    let _ = app.emit("kokoro-stop", ());
 }
