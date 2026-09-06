@@ -1,0 +1,96 @@
+<div align="center">
+
+<img src="src-tauri/icons/128x128.png" width="96" height="96" alt="Read Selected Text" />
+
+# Read Selected Text
+
+**Select text in any app, press a hotkey, hear it read aloud.**
+
+A tiny, cross-platform desktop app that lives in your system tray and reads your
+selected text out loud — in any application or website — using OpenAI,
+ElevenLabs, or your computer's built-in voice.
+
+[![Release](https://img.shields.io/github/v/release/OWNER/read-selected-text?include_prereleases)](https://github.com/OWNER/read-selected-text/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Build](https://github.com/OWNER/read-selected-text/actions/workflows/release.yml/badge.svg)](https://github.com/OWNER/read-selected-text/actions/workflows/release.yml)
+
+</div>
+
+---
+
+## Why
+
+If you read a lot of documentation, articles, or long threads, letting your ears
+do some of the work saves your eyes and helps you power through. This app makes
+that a one-key habit: **highlight → hotkey → listen**, everywhere on your
+computer, with no copy-paste into a website.
+
+## How it works
+
+1. You select text anywhere — a browser, a PDF, your IDE, a chat window.
+2. You press the global hotkey (default **Ctrl/Cmd + Alt + R**).
+3. The app copies the selection, sends it to your chosen voice engine, and plays
+   the audio. Press **Ctrl/Cmd + Alt + S** to stop.
+
+It runs quietly in the tray and can start automatically at login.
+
+## Voice engines
+
+| Engine            | API key | Cost                  | Quality        | Offline |
+| ----------------- | :-----: | --------------------- | -------------- | :-----: |
+| **OpenAI TTS**    |   Yes   | ~$15 / 1M chars       | Very natural   |   No    |
+| **ElevenLabs**    |   Yes   | Plan-based            | Most human     |   No    |
+| **System voice**  |   No    | Free                  | Basic/robotic  |   Yes   |
+
+Pick whichever you like in Settings and switch anytime. Your API keys are stored
+in the operating system's secure keychain — never in a plaintext file.
+
+## Install
+
+Download the installer for your platform from the
+[**Releases**](https://github.com/OWNER/read-selected-text/releases) page:
+
+- **Windows** — `.msi` or `.exe` (NSIS)
+- **macOS** — `.dmg` (universal)
+- **Linux** — `.AppImage` or `.deb`
+
+Then open the app, choose a voice engine, paste your API key (if needed), and
+you're set. See [docs/SETUP.md](docs/SETUP.md) for a step-by-step guide, API-key
+instructions, and platform permission notes.
+
+> **macOS note:** the app needs **Accessibility** permission to send the copy
+> keystroke. macOS will prompt you on first use — see the setup guide.
+
+## Build from source
+
+You need [Node.js](https://nodejs.org) and the
+[Rust toolchain](https://rustup.rs), plus the platform prerequisites listed in
+the [Tauri docs](https://tauri.app/start/prerequisites/).
+
+```bash
+git clone https://github.com/OWNER/read-selected-text.git
+cd read-selected-text
+npm install
+npm run dev      # run in development
+npm run build    # produce installers in src-tauri/target/release/bundle
+```
+
+More detail in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+
+## Tech stack
+
+- **[Tauri 2](https://tauri.app)** — tiny, secure desktop shell (Rust core)
+- Rust backend: global hotkeys, clipboard capture, secure key storage, audio
+- Plain HTML/CSS/JS settings UI (no framework, no build step)
+
+## Privacy
+
+- Text you read is sent **only** to the voice provider **you** choose (OpenAI or
+  ElevenLabs). The System voice engine is fully offline.
+- API keys live in your OS keychain (Keychain / Credential Manager / Secret
+  Service).
+- No telemetry, no accounts, no servers of our own.
+
+## License
+
+[MIT](LICENSE)

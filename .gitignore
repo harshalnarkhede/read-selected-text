@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Rust / Tauri build output
+src-tauri/target/
+src-tauri/gen/
+
+# Generated icon set is committed, but ignore the working PNG variants if any
+# (icon-source.png IS committed on purpose so `npm run icon` can be re-run)
+
+# Editors
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Env
+.env
+.env.local
