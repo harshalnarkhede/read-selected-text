@@ -1,7 +1,7 @@
 //! Capturing the current selection and reading it aloud.
 
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use arboard::Clipboard;
 use enigo::{Direction, Enigo, Key, Keyboard, Settings as EnigoSettings};
@@ -19,6 +19,11 @@ pub struct AppState {
 }
 
 /// Simulate the platform copy shortcut so the focused app copies its selection.
+///
+/// Because the read hotkey (e.g. Ctrl+Alt+R) is usually still physically held
+/// when this runs, we first send key-up for every modifier to neutralise the
+/// OS modifier state — otherwise a stray Alt/Shift turns our synthetic Ctrl+C
+/// into Ctrl+Alt+C and nothing gets copied.
 fn simulate_copy() -> Result<(), String> {
     let mut enigo = Enigo::new(&EnigoSettings::default()).map_err(|e| e.to_string())?;
 
@@ -26,6 +31,12 @@ fn simulate_copy() -> Result<(), String> {
     let modifier = Key::Meta;
     #[cfg(not(target_os = "macos"))]
     let modifier = Key::Control;
+
+    // Release any modifiers the user is still holding from the hotkey.
+    for k in [Key::Alt, Key::Shift, Key::Control, Key::Meta] {
+        let _ = enigo.key(k, Direction::Release);
+    }
+    std::thread::sleep(Duration::from_millis(60));
 
     enigo
         .key(modifier, Direction::Press)
@@ -49,16 +60,25 @@ fn capture_selection(restore: bool) -> Result<String, String> {
     let previous = clipboard.get_text().ok();
 
     // Sentinel so we can detect whether the copy produced anything.
-    let _ = clipboard.set_text("");
+    let _ = clipboard.set_text(String::new());
     // Small delay so the emptied clipboard settles before we send copy.
-    std::thread::sleep(Duration::from_millis(30));
+    std::thread::sleep(Duration::from_millis(40));
 
     simulate_copy()?;
 
-    // Give the foreground app time to service the copy command.
-    std::thread::sleep(Duration::from_millis(180));
-
-    let text = clipboard.get_text().unwrap_or_default();
+    // Poll the clipboard: apps service the copy command asynchronously, and
+    // slower ones (browsers, Electron apps) can take several hundred ms.
+    let mut text = String::new();
+    let deadline = Instant::now() + Duration::from_millis(1200);
+    while Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(40));
+        if let Ok(t) = clipboard.get_text() {
+            if !t.is_empty() {
+                text = t;
+                break;
+            }
+        }
+    }
 
     if restore {
         if let Some(prev) = previous {
