@@ -5,6 +5,9 @@ node_modules/
 src-tauri/target/
 src-tauri/gen/
 
+# Assembled installers for local testing
+dist/
+
 # Generated icon set is committed, but ignore the working PNG variants if any
 # (icon-source.png IS committed on purpose so `npm run icon` can be re-run)
 
